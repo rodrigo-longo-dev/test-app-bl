@@ -6,10 +6,10 @@ import {
   TextInput,
   ScrollView,
   TouchableOpacity,
+  PermissionsAndroid,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BleManager } from "react-native-ble-plx";
-import base64 from "react-native-base64"; // Necesario para convertir texto a base64
 
 const manager = new BleManager();
 
@@ -27,8 +27,35 @@ const Welcome = () => {
   const PASSWORD_UUID = "dcba4321-8765-0fea-dcba-0987654321ef"; // UUID para escribir la contraseña
   const STATUS_UUID = "1122aabb-3344-5566-7788-99aabbccddeeff"; // UUID para leer el estado de conexión
 
+  // Función para solicitar permisos de Bluetooth y ubicación en Android
+  const requestPermissions = async () => {
+    try {
+      const bluetoothPermission = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN
+      );
+      const locationPermission = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
+      );
+
+      return (
+        bluetoothPermission === PermissionsAndroid.RESULTS.GRANTED &&
+        locationPermission === PermissionsAndroid.RESULTS.GRANTED
+      );
+    } catch (error) {
+      console.warn("Error requesting permissions", error);
+      return false;
+    }
+  };
   // 🔍 Escanear dispositivos BLE
-  const scanDevices = () => {
+  const scanDevices = async () => {
+    const permissionsGranted = await requestPermissions();
+    if (!permissionsGranted) {
+      Alert.alert(
+        "Permisos requeridos",
+        "Por favor, concede los permisos de Bluetooth y ubicación."
+      );
+      return;
+    }
     setScanning(true);
     setDevices([]);
 
